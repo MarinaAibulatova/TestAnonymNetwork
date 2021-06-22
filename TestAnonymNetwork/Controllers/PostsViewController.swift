@@ -74,6 +74,8 @@ class PostsViewController: UIViewController, UITableViewDelegate, UITableViewDat
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print(indexPath.row)
+        let viewController = PostViewController()
+        self.navigationController?.pushViewController(viewController, animated: true)
     }
 
 }
