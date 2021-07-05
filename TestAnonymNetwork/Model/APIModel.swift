@@ -63,7 +63,6 @@ struct Author: Codable {
     let id: String
     let name: String
     let gender: String //case?
-    //let statistics: AuthorStatistics
 }
 struct AuthorStatistics: Codable {
     let likes: Int?
