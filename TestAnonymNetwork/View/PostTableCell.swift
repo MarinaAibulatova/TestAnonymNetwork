@@ -6,21 +6,26 @@
 //
 
 import UIKit
+import AVFoundation
 
 class PostTableCell: UITableViewCell {
     
+    var player: AVAudioPlayer!
+    
     //MARK: - variables
-    let authorName: UILabel = {
+    var authorName: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 15)
+        label.font = UIFont.boldSystemFont(ofSize: 15)
         label.textColor = UIColor.black
         return label
     }()
     
-    let headingText: UILabel = {
+    var headingText: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 20)
         label.textColor = UIColor.black
+        label.numberOfLines = 0
+        label.sizeToFit()
         return label
     }()
     
@@ -28,12 +33,14 @@ class PostTableCell: UITableViewCell {
         let myImage = UIImageView()
         myImage.contentMode = .scaleAspectFit
         myImage.translatesAutoresizingMaskIntoConstraints = false
+        
         return myImage
     }()
     
-    let heartImage: UIImageView = {
+    let likesImage: UIImageView = {
         let myImage = UIImageView()
-        myImage.image = UIImage(systemName: "suit.heart.fill")
+        myImage.image = UIImage(systemName: "heart")
+        myImage.contentMode = .scaleAspectFit
         return myImage
     }()
     
@@ -43,6 +50,36 @@ class PostTableCell: UITableViewCell {
         label.textColor = UIColor.black
         return label
     }()
+    
+    let viewsImage: UIImageView = {
+        let myImage = UIImageView()
+        myImage.image = UIImage(systemName: "eye")
+        myImage.contentMode = .scaleAspectFit
+        return myImage
+    }()
+    
+    let viewsCount: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 15)
+        label.textColor = UIColor.black
+        return label
+    }()
+    
+    let commentsImage: UIImageView = {
+        let myImage = UIImageView()
+        myImage.image = UIImage(systemName: "text.bubble")
+        myImage.contentMode = .scaleAspectFit
+        return myImage
+    }()
+    
+    let commentsCount: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 15)
+        label.textColor = UIColor.black
+        return label
+    }()
+    
+    
     
     //MARK: - ui components
     private let stackViews: UIStackView = {
@@ -104,6 +141,50 @@ class PostTableCell: UITableViewCell {
         return stack
     }()
     
+    private let stackLikes: UIStackView = {
+        var stack = UIStackView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.axis = .horizontal
+        stack.distribution = .fillProportionally
+        stack.spacing = 0
+        stack.alignment = .center
+        
+        return stack
+    }()
+    
+    private let stackPostViews: UIStackView = {
+        var stack = UIStackView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.axis = .horizontal
+        stack.distribution = .fillProportionally
+        stack.spacing = 0
+        
+        return stack
+    }()
+    
+    private let stackComments: UIStackView = {
+        var stack = UIStackView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.axis = .horizontal
+        stack.distribution = .fillProportionally
+        stack.spacing = 0
+        
+        return stack
+    }()
+    
+    private let buttonSound: UIButton = {
+        var button = UIButton()
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle("Test", for: UIControl.State.normal)
+        button.setTitleColor(UIColor.blue, for: UIControl.State.normal)
+        button.backgroundColor = UIColor.red
+        return button
+    }()
+    
+    @objc func buttonAction(_ sender: UIButton!) {
+        print("Test")
+    }
+    
     func setCell () {
        
         contentView.addSubview(stackViews)
@@ -120,14 +201,27 @@ class PostTableCell: UITableViewCell {
         stackHead.addArrangedSubview(headingText)
         
         dataView.addSubview(postImage)
-        postImage.contentMode = .scaleAspectFit
-        postImage.translatesAutoresizingMaskIntoConstraints = false
         setPostImageConstraints()
        
-        stackStatistics.addArrangedSubview(heartImage)
-        stackStatistics.addArrangedSubview(likesCount)
+        buttonSound.addTarget(self, action: #selector(self.buttonAction), for: .touchUpInside)
+        
+        //dataView.addSubview(buttonSound)
+        
+        stackStatistics.addArrangedSubview(stackLikes)
+        stackStatistics.addArrangedSubview(stackPostViews)
+        stackStatistics.addArrangedSubview(stackComments)
+        
+        stackLikes.addArrangedSubview(likesImage)
+        stackLikes.addArrangedSubview(likesCount)
+        
+        stackPostViews.addArrangedSubview(viewsImage)
+        stackPostViews.addArrangedSubview(viewsCount)
+        
+        stackComments.addArrangedSubview(commentsImage)
+        stackComments.addArrangedSubview(commentsCount)
         
         statisticsView.addSubview(stackStatistics)
+        setStackStatisticsConstraints()
     }
     
     //MARK: - set constraints
@@ -158,11 +252,61 @@ class PostTableCell: UITableViewCell {
         NSLayoutConstraint.activate(constrains)
     }
     
-    func setVar() {
-        authorName.text = "Автор"
-        headingText.text = "Название"
-        postImage.image = UIImage(named: "postfoto")
-        likesCount.text = "10"
+    func setStackStatisticsConstraints() {
+        let constraints = [
+            stackStatistics.leadingAnchor.constraint(equalTo: statisticsView.leadingAnchor),
+            stackStatistics.trailingAnchor.constraint(equalTo: statisticsView.trailingAnchor),
+            stackStatistics.topAnchor.constraint(equalTo: statisticsView.topAnchor),
+            stackStatistics.bottomAnchor.constraint(equalTo: statisticsView.bottomAnchor)]
+        NSLayoutConstraint.activate(constraints)
+    }
+    
+    func setVar(post: Post) {
+        let author = post.authorName ?? "no author"
+        authorName.text = "author: \(author)"
+        headingText.text = post.headerText
+        
+        for content in post.content {
+            switch content.key {
+            case .IMAGE:
+                
+                if let url = URL(string: content.value) {
+                    let data = try? Data(contentsOf: url)
+                    postImage.image = UIImage(data: data!)
+                }
+                
+            case .IMAGE_GIF:
+                
+                postImage.animationImages = UIImageView.fromGif(urlString: content.value)
+                postImage.startAnimating()
+                
+            case .AUDIO:
+                //m4a does not work
+                if let url = URL(string: content.value) {
+                    do {
+                        
+                        let soundToPlay = Bundle.main.path(forResource: "startRound", ofType: "mp3")
+                        
+                        player = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: soundToPlay!))
+                        
+                        player.prepareToPlay()
+                        player.volume = 1.0
+                       
+                        player.play()
+                 
+                    }catch {
+                        print(error)
+                    }
+                }
+                
+            default:
+                print("")
+            }
+        }
+        
+        likesCount.text = String(post.postStatistic[PostStatiscticType.likes]!)
+        viewsCount.text = String(post.postStatistic[PostStatiscticType.views]!)
+        commentsCount.text = String(post.postStatistic[PostStatiscticType.comments]!)
     }
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -185,5 +329,27 @@ class CustomView: UIView {
     
     override var intrinsicContentSize: CGSize {
         return CGSize(width: 1.0, height: height)
+    }
+}
+
+extension UIImageView {
+    
+    static func fromGif(urlString: String) -> [UIImage]? {
+        let url = URL(string: urlString)
+        guard let gifData = try? Data(contentsOf: url!), let source = CGImageSourceCreateWithData(gifData as CFData, nil) else {
+            return nil
+        }
+        
+        var images = [UIImage]()
+        let imageCount = CGImageSourceGetCount(source)
+        
+        for i in 0 ..< imageCount {
+            if let image = CGImageSourceCreateImageAtIndex(source, i, nil) {
+                images.append(UIImage(cgImage: image))
+            }
+        }
+        
+        return images
+        
     }
 }

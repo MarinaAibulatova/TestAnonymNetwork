@@ -9,6 +9,8 @@ import UIKit
 
 class PostViewController: UIViewController {
 
+    //let post: Post?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -20,6 +22,7 @@ class PostViewController: UIViewController {
         setPostViewConstraints(viewForConstraint: postView)
         // Do any additional setup after loading the view.
     }
+    
     
     func setPostViewConstraints(viewForConstraint: PostView) {
         let margins = view.layoutMarginsGuide

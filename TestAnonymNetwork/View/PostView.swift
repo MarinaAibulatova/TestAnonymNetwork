@@ -15,7 +15,6 @@ class PostView: UIView {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .white
         view.contentMode = .scaleToFill
-        
         return view
     }()
     
